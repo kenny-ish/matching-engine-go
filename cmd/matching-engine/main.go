@@ -1,3 +1,4 @@
+// Command matching-engine is an interactive shell around the orderbook package.
 package main
 
 import (
@@ -6,26 +7,28 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/kenny-ish/matching-engine-go/orderbook"
 )
 
-func printTrades(ts []Trade) {
+func printTrades(ts []orderbook.Trade) {
 	for _, t := range ts {
 		fmt.Printf("TRADE %d @ %d (maker %d, taker %d)\n", t.Qty, t.Price, t.Maker, t.Taker)
 	}
 }
 
-func parseSide(s string) (Side, bool) {
+func parseSide(s string) (orderbook.Side, bool) {
 	switch s {
 	case "buy":
-		return Buy, true
+		return orderbook.Buy, true
 	case "sell":
-		return Sell, true
+		return orderbook.Sell, true
 	}
 	return 0, false
 }
 
 func main() {
-	b := NewBook()
+	b := orderbook.NewBook()
 	sc := bufio.NewScanner(os.Stdin)
 	fmt.Println("commands: buy P Q | sell P Q | market buy|sell Q | cancel ID | book | quit")
 	for fmt.Print("> "); sc.Scan(); fmt.Print("> ") {
@@ -37,11 +40,11 @@ func main() {
 		case f[0] == "quit":
 			return
 		case f[0] == "book":
-			asks := b.Depth(Sell)
+			asks := b.Depth(orderbook.Sell)
 			for i := len(asks) - 1; i >= 0; i-- {
 				fmt.Printf("  ask %7d x %d\n", asks[i][0], asks[i][1])
 			}
-			for _, l := range b.Depth(Buy) {
+			for _, l := range b.Depth(orderbook.Buy) {
 				fmt.Printf("  bid %7d x %d\n", l[0], l[1])
 			}
 		case f[0] == "cancel" && len(f) == 2:
@@ -54,7 +57,11 @@ func main() {
 				fmt.Println("usage: market buy|sell QTY")
 				continue
 			}
-			_, ts := b.Market(side, q)
+			_, ts, err := b.Market(side, q)
+			if err != nil {
+				fmt.Println("rejected:", err)
+				continue
+			}
 			printTrades(ts)
 		case len(f) == 3:
 			side, ok := parseSide(f[0])
@@ -64,7 +71,11 @@ func main() {
 				fmt.Println("usage: buy|sell PRICE QTY")
 				continue
 			}
-			id, ts := b.Limit(side, p, q)
+			id, ts, err := b.Limit(side, p, q)
+			if err != nil {
+				fmt.Println("rejected:", err)
+				continue
+			}
 			printTrades(ts)
 			fmt.Println("order id", id)
 		default:
