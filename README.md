@@ -1,14 +1,35 @@
 # matching-engine-go
 
-A compact exchange matching engine to understand how order books really work.
+A limit order book with price-time priority in a few hundred lines of Go, using only the standard
+library. It follows the matching rules of real exchanges.
 
-- limit and market orders
-- **price-time priority**: best price first, then first-come-first-served within a level
-- partial fills, resting remainders, cancels by id
-- integer prices (ticks) and quantities, so no floating point surprises
+- limit orders and market orders (immediate-or-cancel)
+- price-time priority: best price first, then first come, first served within a price level
+- trades execute at the maker's price
+- partial fills, resting remainders, cancel by id
+- integer prices and quantities, and invalid orders are rejected with typed errors
+
+[DESIGN.md](DESIGN.md) explains the data structures, the matching rules and what each operation
+costs.
+
+## Library
 
 ```bash
-go run .
+go get github.com/kenny-ish/matching-engine-go/orderbook
+```
+
+```go
+b := orderbook.NewBook()
+b.Limit(orderbook.Sell, 101, 5)
+b.Limit(orderbook.Sell, 100, 5)
+id, trades, err := b.Limit(orderbook.Buy, 101, 7) // fills 5 @ 100, then 2 @ 101
+```
+
+## Interactive shell
+
+```
+$ go run ./cmd/matching-engine
+commands: buy P Q | sell P Q | market buy|sell Q | cancel ID | book | quit
 > buy 100 5
 order id 1
 > sell 101 3
@@ -24,11 +45,14 @@ TRADE 2 @ 99 (maker 3, taker 4)
 TRADE 2 @ 101 (maker 2, taker 4)
 > cancel 2
 cancelled: true
+> buy 100 0
+rejected: orderbook: quantity must be positive
 ```
 
-Trades execute at the **maker's** price, as on real exchanges. Unfilled market order
-quantity is discarded rather than resting.
+## Tests
 
 ```bash
 go test ./...
 ```
+
+Release notes are in [CHANGELOG.md](CHANGELOG.md).
