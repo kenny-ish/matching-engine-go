@@ -1,5 +1,7 @@
 # matching-engine-go
 
+[![CI](https://github.com/kenny-ish/matching-engine-go/actions/workflows/ci.yml/badge.svg)](https://github.com/kenny-ish/matching-engine-go/actions/workflows/ci.yml)
+
 A limit order book with price-time priority in a few hundred lines of Go, using only the standard
 library. It follows the matching rules of real exchanges.
 
