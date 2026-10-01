@@ -2,6 +2,10 @@
 
 All notable changes to this project are documented in this file.
 
+## Unreleased
+
+- Tests for partial fills across levels, cancels after partial fills, FIFO after a cancel and crosses at exactly the best price
+
 ## 0.1.0 - 2026-09-27
 
 - `orderbook` package: limit and market orders, price-time priority, trades at the maker's price, cancel by id, depth
