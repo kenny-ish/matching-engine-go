@@ -5,6 +5,8 @@ All notable changes to this project are documented in this file.
 ## Unreleased
 
 - Tests for partial fills across levels, cancels after partial fills, FIFO after a cancel and crosses at exactly the best price
+- `FuzzBook` applies random limit, market and cancel sequences and checks the book invariants after every step
+- Benchmarks for resting, matching and cancelling
 
 ## 0.1.0 - 2026-09-27
 
