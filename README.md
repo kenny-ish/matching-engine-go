@@ -54,7 +54,14 @@ rejected: orderbook: quantity must be positive
 ## Tests
 
 ```bash
-go test ./...
+go test ./...                                               # unit, edge-case and fuzz seed tests
+go test -run '^$' -fuzz FuzzBook -fuzztime 30s ./orderbook  # random operation sequences
+go test -run '^$' -bench . ./orderbook                      # benchmarks
 ```
+
+The fuzz target drives the book with random limit, market and cancel operations and checks after
+every step that the book is never crossed, levels are strictly ordered and never empty, every
+trade prints at the maker's price within the taker's limit, and the resting quantity at each price
+matches a simple model of the orders.
 
 Release notes are in [CHANGELOG.md](CHANGELOG.md).
