@@ -6,8 +6,9 @@ continuous-trading venue. These notes explain the choices.
 ## Data structures
 
 - Each side is a slice of price levels sorted best first: bids descending, asks ascending.
-- A level is a FIFO queue (a slice) of the resting orders at one price.
-- `index` maps a resting order id to its side, so `Cancel` knows which side to search.
+- A level is a FIFO queue (a slice) of the resting orders at one price, plus the live quantity
+  at that price and a count of cancelled orders still in the queue.
+- `index` maps a resting order id to the order and its level.
 
 A sorted slice keeps the best price at index 0, which is all matching needs. Inserting a new
 price level costs a binary search plus a copy of the slice tail. For books with tens to a few
@@ -26,6 +27,15 @@ hundred active levels that's cheap, and friendlier to the cache than a tree.
    opposite side is empty, and the unfilled rest is discarded. Resting a market order would mean
    inventing a price for it.
 
+## Cancelling lazily
+
+Cancels are the most common message on a real venue, so they should not scan the book. `Cancel`
+looks the order up in the index, subtracts its quantity from the level and marks it with
+quantity 0. The order stays in the queue until matching reaches it (it is skipped) or until
+cancelled orders make up more than half of the queue, when the queue is compacted. A level whose
+live quantity drops to zero is removed from the side right away, so the best price is always
+live.
+
 ## Validation
 
 Orders with a non-positive quantity, a non-positive limit price or an unknown side are rejected
@@ -39,9 +49,9 @@ L = price levels on a side, N = resting orders on a side, k = orders filled.
 | operation | cost |
 |---|---|
 | `Limit` that rests | O(log L) search, plus an O(L) copy when it creates a level |
-| matching (`Limit` or `Market`) | O(k) |
-| `Cancel` | O(N) scan of the side |
-| `Depth` | O(N) |
+| matching (`Limit` or `Market`) | O(k), plus skipping cancelled orders once |
+| `Cancel` | O(1) amortized, O(log L + L) when it empties a level |
+| `Depth` | O(L) |
 
 ## Out of scope
 

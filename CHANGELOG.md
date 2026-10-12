@@ -7,6 +7,8 @@ All notable changes to this project are documented in this file.
 - Tests for partial fills across levels, cancels after partial fills, FIFO after a cancel and crosses at exactly the best price
 - `FuzzBook` applies random limit, market and cancel sequences and checks the book invariants after every step
 - Benchmarks for resting, matching and cancelling
+- `Cancel` is O(1): the index points at the order and its level, and cancelled orders leave their queue lazily (BenchmarkCancel on a 10,000-order book: 4,921 ns/op -> 250 ns/op)
+- `Depth` is O(levels) instead of O(orders): each level keeps its live quantity
 
 ## 0.1.0 - 2026-09-27
 
