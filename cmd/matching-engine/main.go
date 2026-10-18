@@ -17,6 +17,32 @@ func printTrades(ts []orderbook.Trade) {
 	}
 }
 
+// printBook shows asks above bids, each with the size available up to that price.
+func printBook(b *orderbook.Book) {
+	asks, bids := b.Depth(orderbook.Sell), b.Depth(orderbook.Buy)
+	if len(asks)+len(bids) == 0 {
+		fmt.Println("  (empty)")
+		return
+	}
+	cum := make([]int64, len(asks))
+	var total int64
+	for i, l := range asks {
+		total += l[1]
+		cum[i] = total
+	}
+	for i := len(asks) - 1; i >= 0; i-- {
+		fmt.Printf("  ask %7d x %-6d cum %d\n", asks[i][0], asks[i][1], cum[i])
+	}
+	if len(asks) > 0 && len(bids) > 0 {
+		fmt.Printf("  ---- spread %d ----\n", asks[0][0]-bids[0][0])
+	}
+	total = 0
+	for _, l := range bids {
+		total += l[1]
+		fmt.Printf("  bid %7d x %-6d cum %d\n", l[0], l[1], total)
+	}
+}
+
 func parseSide(s string) (orderbook.Side, bool) {
 	switch s {
 	case "buy":
@@ -40,13 +66,7 @@ func main() {
 		case f[0] == "quit":
 			return
 		case f[0] == "book":
-			asks := b.Depth(orderbook.Sell)
-			for i := len(asks) - 1; i >= 0; i-- {
-				fmt.Printf("  ask %7d x %d\n", asks[i][0], asks[i][1])
-			}
-			for _, l := range b.Depth(orderbook.Buy) {
-				fmt.Printf("  bid %7d x %d\n", l[0], l[1])
-			}
+			printBook(b)
 		case f[0] == "cancel" && len(f) == 2:
 			id, _ := strconv.Atoi(f[1])
 			fmt.Println("cancelled:", b.Cancel(id))
